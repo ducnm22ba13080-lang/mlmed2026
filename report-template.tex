@@ -1,22 +1,150 @@
 \documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs} % For nicer tables
+\usepackage{float}
 
-\title{This is your report}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\title{ECG Arrhythmia Classification using Logistic Regression}
+
+% Author placeholder
+\author{\IEEEauthorblockN{Report 1}
+\IEEEauthorblockA{\textit{Machine Learning Experimentation}}}
 
 \begin{document}
 
 \maketitle
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+\begin{abstract}
+This report details the implementation of a Machine Learning pipeline for classifying heartbeat arrhythmias using the MIT-BIH Arrhythmia Database. Moving away from Deep Learning approaches (such as CNNs), this experiment utilizes a linear classifier—Logistic Regression. The study focuses on handling severe class imbalance via a hybrid resampling strategy, feature scaling, and hyperparameter tuning. The final model achieves a weighted average precision of 0.88 and an accuracy of 68\%. The results highlight the trade-offs between model interpretability and the ability to capture non-linear dependencies in ECG signals.
+\end{abstract}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+\section{Introduction}
+Electrocardiogram (ECG) monitoring is the standard for diagnosing cardiac arrhythmias. While Deep Learning models like Convolutional Neural Networks (CNN) have achieved state-of-the-art performance in this domain, understanding the performance of simpler, linear models provides a crucial baseline. 
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+This report documents the application of Multinomial Logistic Regression to classify heartbeats into five distinct categories. We specifically address the challenges of high dimensionality (187 features per sample) and extreme class imbalance inherent in medical datasets.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+\section{Dataset Description}
+The dataset used in this experiment is derived from the renowned **MIT-BIH Arrhythmia Database**. The data has been pre-processed, segmented into individual heartbeats, and normalized.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+\subsection{Data Structure}
+The dataset is divided into two Comma-Separated Values (CSV) files:
+\begin{itemize}
+    \item \texttt{mitbih\_train.csv}: The training set.
+    \item \texttt{mitbih\_test.csv}: The testing set.
+\end{itemize}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+Each row represents a single heartbeat signal containing 188 columns:
+\begin{itemize}
+    \item \textbf{Columns 0-186:} The input features representing the ECG signal amplitude at different time steps (sampled at 125Hz).
+    \item \textbf{Column 187:} The target class label (integer 0-4).
+\end{itemize}
+
+\subsection{Class Distribution and Imbalance}
+The dataset is characterized by a severe class imbalance. The "Normal" class dominates the dataset, which poses a significant challenge for standard training algorithms. The original distribution of the training set is shown in Table \ref{tab:distribution}.
+
+\begin{table}[htbp]
+\caption{Original Class Distribution (Training Set)}
+\begin{center}
+\begin{tabular}{cllr}
+\toprule
+\textbf{ID} & \textbf{Code} & \textbf{Description} & \textbf{Count} \\
+\midrule
+0 & N & Normal Beat & 72,471 \\
+1 & S & Supraventricular premature & 2,223 \\
+2 & V & Premature ventricular contraction & 5,788 \\
+3 & F & Fusion of ventricular \& normal & 641 \\
+4 & Q & Unclassifiable beat & 6,431 \\
+\bottomrule
+\end{tabular}
+\label{tab:distribution}
+\end{center}
+\end{table}
+
+The ratio between the majority class (N) and the minority class (F) is approximately 113:1. Without handling this, a model would achieve $\approx 82\%$ accuracy simply by predicting "Normal" for every input, failing to detect any pathologies.
+
+\section{Implementation}
+The implementation was performed using Python and the \texttt{scikit-learn} library. The pipeline consists of three main stages.
+
+\subsection{Data Preprocessing (Resampling)}
+To address the imbalance, we applied a hybrid resampling strategy to the training data to create a perfectly balanced dataset of 20,000 samples per class:
+\begin{enumerate}
+    \item \textbf{Downsampling:} The majority class (N) was randomly downsampled from 72,471 to 20,000 samples.
+    \item \textbf{Upsampling:} All minority classes (S, V, F, Q) were upsampled with replacement to reach 20,000 samples each.
+\end{enumerate}
+This resulted in a final training set of 100,000 samples. The testing set was left unmodified to ensure the evaluation reflects real-world performance.
+
+\subsection{Feature Scaling}
+Logistic Regression utilizes distance-based calculations (gradient descent). Raw ECG data, while normalized in amplitude, can still vary. We applied \texttt{StandardScaler} to standardize features by removing the mean and scaling to unit variance. This step is critical for the convergence of the \texttt{saga} solver.
+
+\subsection{Model Architecture}
+We utilized the \texttt{LogisticRegression} classifier with the following configuration:
+\begin{itemize}
+    \item \textbf{Multi-class Strategy:} \texttt{multinomial} (Softmax Regression), allowing the model to handle 5 classes natively.
+    \item \textbf{Solver:} \texttt{saga}. This solver is a variant of Stochastic Average Gradient and is the preferred choice for large datasets and multinomial loss functions.
+\end{itemize}
+
+\section{Hyperparameter Experimentation}
+We experimented with hyperparameters to achieve model convergence and optimal performance.
+
+\subsection{Max Iterations}
+\begin{itemize}
+    \item \textit{Experiment A (Default):} \texttt{max\_iter=100}. The model failed to converge, returning warnings that the coefficients had not stabilized.
+    \item \textit{Experiment B (Chosen):} \texttt{max\_iter=1000}. By increasing the iterations, the model was able to traverse the cost function effectively. The training logs indicated that the solver reached the maximum iterations after approximately 1004 seconds on a parallelized backend.
+\end{itemize}
+
+\subsection{Regularization}
+We utilized L2 regularization (Ridge) with default strength ($C=1.0$). We found that loosening the regularization ($C=10.0$) did not significantly improve accuracy but increased training time, while tightening it ($C=0.1$) reduced the model's ability to fit the minority classes.
+
+\section{Results and Discussion}
+The model was evaluated on the unseen test set ($n=21,892$).
+
+\subsection{Performance Metrics}
+The classification report yields an overall accuracy of 68\%. Detailed metrics are presented in Table \ref{tab:results}.
+
+\begin{table}[htbp]
+\caption{Classification Report Results}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} \\
+\midrule
+N (Normal) & 0.97 & 0.65 & 0.78 \\
+S (Supraventricular) & 0.15 & 0.66 & 0.24 \\
+V (Ventricular) & 0.30 & 0.72 & 0.42 \\
+F (Fusion) & 0.08 & 0.87 & 0.15 \\
+Q (Unknown) & 0.73 & 0.91 & 0.81 \\
+\midrule
+\textbf{Weighted Avg} & \textbf{0.88} & \textbf{0.68} & \textbf{0.74} \\
+\bottomrule
+\end{tabular}
+\label{tab:results}
+\end{center}
+\end{table}
+
+\subsection{Confusion Matrix Analysis}
+The confusion matrix reveals specific behaviors introduced by our resampling strategy:
+\begin{itemize}
+    \item \textbf{High Recall, Low Precision:} For the minority classes (S and F), the Recall is relatively high (0.66 and 0.87). This means the model successfully catches most arrhythmias. However, the Precision is very low (0.15 and 0.08).
+    \item \textbf{False Positives:} There is significant confusion where Normal beats (N) are incorrectly predicted as Supraventricular (S) or Ventricular (V). This is a side effect of aggressive upsampling; the model is biased to predict arrhythmias more often than they occur in nature.
+\end{itemize}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{output.png}
+    \caption{Confusion Matrix obtained from the Logistic Regression model on the test set.}
+    \label{fig:confusion_matrix}
+\end{figure}
+
+\subsection{Limitations of Linearity}
+The accuracy of 68\% is significantly lower than typical CNN implementations (which often exceed 98\% on this dataset). This gap demonstrates that raw ECG signals contain complex, non-linear temporal dependencies that a linear Logistic Regression model cannot capture, regardless of hyperparameter tuning.
+
+\section{Conclusion}
+This experiment demonstrated that while Logistic Regression can be forced to recognize minority ECG classes through resampling, it struggles to differentiate them precisely from normal rhythms. The model trades precision for recall, resulting in a high false-alarm rate. For clinical applications requiring high fidelity, non-linear Deep Learning models (like 1D-CNNs) are strictly necessary.
 
 \end{document}
