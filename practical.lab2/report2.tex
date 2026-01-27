@@ -1,0 +1,119 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{float}
+
+\title{Report 2}
+
+\author{\IEEEauthorblockN{Nguyen Minh Duc - 22BA13080}}
+
+\begin{document}
+
+\maketitle
+
+
+
+\section{Introduction}
+Medical imaging uses ultrasound to monitor the growth of a baby. The head circumference (HC) is a key measurement for health assessment. This study aims to predict the HC value by using the "pixel size" feature. A Random Forest model was selected for this task because it is effective at finding patterns in medical datasets.
+
+\section{Dataset Description}
+The data is stored in a file named \texttt{training\_set\_pixel\_size\_and\_HC.csv}. It contains information from 999 ultrasound cases.
+
+\subsection{Data Structure}
+The dataset includes three main columns:
+\begin{itemize}
+    \item \texttt{filename}: The name of the image.
+    \item \texttt{pixel size(mm)}: The physical size represented by one pixel.
+    \item \texttt{head circumference (mm)}: The real measurement of the baby's head.
+\end{itemize}
+
+\subsection{Summary Statistics}
+The basic numbers of the dataset are shown in Table \ref{tab:stats}.
+
+\begin{table}[htbp]
+\caption{Dataset Summary Statistics}
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{Pixel Size (mm)} & \textbf{Head Size (mm)} \\
+\midrule
+Average & 0.1398 & 174.38 \\
+Minimum & 0.0494 & 44.30 \\
+Maximum & 0.3933 & 346.40 \\
+\bottomrule
+\end{tabular}
+\label{tab:stats}
+\end{center}
+\end{table}
+
+\subsection{Data Distribution}
+The distribution of the head circumference values is shown in Figure \ref{fig:dist}. This graph demonstrates the frequency of different head sizes across the 999 cases.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\linewidth]{target_dist.png} 
+    \caption{Distribution of head circumference measurements}
+    \label{fig:dist}
+\end{figure}
+
+\section{Implementation}
+The machine learning process was created using Python and the \texttt{scikit-learn} library.
+
+\subsection{Preprocessing}
+The CSV file was loaded and the data was separated. The \texttt{pixel size} was used as the input feature, and the \texttt{head circumference} was the target for prediction. The data was split into two sets: 80\% for training the model and 20\% for testing the accuracy.
+
+\subsection{Model Selection}
+The Random Forest Regressor was used. This model combines many decision trees to reach a final prediction. This method is useful for reducing errors caused by unusual data points.
+
+\section{Hyperparameter Experimentation}
+Different settings for the model were tested to improve accuracy. The performance was measured using Mean Absolute Error (MAE), which shows the average difference in millimeters between the predicted and real values.
+
+\subsection{Settings Tested}
+Two main settings were adjusted:
+\begin{itemize}
+    \item The number of trees (\texttt{n\_estimators}).
+    \item The maximum depth of the trees (\texttt{max\_depth}).
+\end{itemize}
+
+\subsection{Results}
+The results of the experiments are presented in Table \ref{tab:hyper_results}.
+
+\begin{table}[htbp]
+\caption{Model Performance Results}
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+\textbf{Number of Trees} & \textbf{Tree Depth} & \textbf{MAE (mm)} \\
+\midrule
+50 & Unlimited & 28.71 \\
+50 & 5 levels & 24.67 \\
+100 & 5 levels & 24.78 \\
+200 & Unlimited & 29.05 \\
+\bottomrule
+\end{tabular}
+\label{tab:hyper_results}
+\end{center}
+\end{table}
+
+The best performance was achieved using 50 trees with a depth limit of 5 levels. This setting resulted in the lowest error of 24.67 mm.
+
+\section{Results and Discussion}
+The analysis shows a relationship between pixel size and head circumference.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\linewidth]{eda_scatter.png} 
+    \caption{The relationship between pixel size and head circumference.}
+    \label{fig:dist}
+\end{figure}
+
+The best model can predict the head size with an average error of approximately 2.5 cm. While there is a clear trend, the spread in the data suggests that pixel size is not the only factor affecting the head circumference.
+
+\section{Conclusion}
+The report shows that a Random Forest model can be used to estimate baby head size from ultrasound pixel data. Choosing the correct tree depth is the most important factor for improving the results. The study demonstrates that a simpler model with depth limits performs better than a complex model. Future experiments could test additional features from the images to increase accuracy.
+
+\end{document}
